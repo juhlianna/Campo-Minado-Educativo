@@ -184,11 +184,11 @@ function App() {
         <div className="flex items-center gap-3 mb-2">
           <GraduationCap className="w-10 h-10 text-indigo-400" />
           <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
-            Mina do Saber AI
+            Campo Minado Educativo
           </h1>
         </div>
         <p className="text-slate-400 max-w-xl">
-          Edição Ensino Fundamental (10-15 anos). Explore o campo e use seus conhecimentos escolares e tecnológicos para desarmar as bombas!
+          Explore o campo e use seus conhecimentos escolares e tecnológicos para desarmar as bombas!
         </p>
       </div>
 
