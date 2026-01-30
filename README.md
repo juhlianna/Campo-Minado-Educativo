@@ -1,8 +1,6 @@
 
 <img width="1178" height="835" alt="ImageJogo" src="https://github.com/user-attachments/assets/67aacceb-3b9b-438a-b085-5b1f90c1feb7" />
 
-# 🎓 Campo Minado Educativo com IA (Gemini)
-
 Um jogo de Campo Minado reimaginado como uma ferramenta pedagógica. Neste projeto, as "minas" não são apenas obstáculos, mas oportunidades de aprendizado. Ao encontrar uma bomba, o jogador deve responder a uma pergunta gerada por Inteligência Artificial para desarmá-la.
 
 ---
