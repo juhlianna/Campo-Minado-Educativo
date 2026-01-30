@@ -1,0 +1,5 @@
+{
+  "name": "Mina do Saber AI",
+  "description": "Um jogo de campo minado educativo onde cada 'mina' é um desafio de conhecimento. Responda corretamente para desarmar a bomba e receba explicações detalhadas da IA Gemini.",
+  "requestFramePermissions": []
+}
