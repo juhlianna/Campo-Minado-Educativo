@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { CellData, GameState, Subject, Question } from './types';
 import { generateQuestion } from './services/geminiService';
@@ -24,13 +23,10 @@ function App() {
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
 
   useEffect(() => {
-    // Log para depuração na Vercel (ver no console do navegador)
     console.log("Verificando API_KEY...");
     if (!process.env.API_KEY || process.env.API_KEY === "undefined" || process.env.API_KEY === "") {
-      console.error("API_KEY não encontrada nas variáveis de ambiente!");
       setApiKeyMissing(true);
     } else {
-      console.log("API_KEY detectada com sucesso.");
       setApiKeyMissing(false);
     }
   }, []);
@@ -112,17 +108,14 @@ function App() {
   };
 
   const handleMineHit = async (index: number) => {
-    if (apiKeyMissing) {
-      alert("Configuração incompleta: API_KEY ausente nas variáveis de ambiente da Vercel.");
-      return;
-    }
+    if (apiKeyMissing) return;
     setIsGeneratingQuestion(true);
     setPendingMineReveal(index);
     try {
       const question = await generateQuestion(subject);
       setCurrentQuestion(question);
     } catch (error) {
-      console.error("Erro ao gerar pergunta:", error);
+      console.error(error);
       setLives(prev => {
         const next = prev - 1;
         if (next <= 0) setGameState('lost');
@@ -201,15 +194,15 @@ function App() {
         <div className="max-w-md bg-slate-800 border border-red-500/50 p-8 rounded-2xl shadow-2xl">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-white mb-4">Ação Necessária na Vercel</h2>
-          <p className="text-slate-300 mb-6">
-            A variável <strong>API_KEY</strong> não foi injetada. 
+          <p className="text-slate-300 mb-6 text-left">
+            A variável <strong>API_KEY</strong> não foi injetada corretamente.
             <br/><br/>
-            1. Vá em <em>Settings > Environment Variables</em> no painel da Vercel.<br/>
+            1. Vá em <em>Settings {'->'} Environment Variables</em>.<br/>
             2. Adicione <strong>API_KEY</strong> com o seu token.<br/>
-            3. Vá em <em>Deployments</em> e faça um <strong>Redeploy</strong>.
+            3. Vá na aba <em>Deployments</em> e faça um <strong>Redeploy</strong>.
           </p>
           <div className="bg-slate-900 p-3 rounded text-xs text-slate-400 font-mono text-left">
-            Dica: Sem o Redeploy, as novas variáveis não são aplicadas ao site ao vivo.
+            Dica: Sem o Redeploy, as alterações nas variáveis não funcionam.
           </div>
         </div>
       </div>
@@ -226,7 +219,7 @@ function App() {
           </h1>
         </div>
         <p className="text-slate-400 max-w-xl">
-          Explore o campo e use seus conhecimentos escolares e tecnológicos para desarmar as bombas!
+          Explore o campo e use seus conhecimentos para desarmar as bombas!
         </p>
       </div>
 
@@ -276,38 +269,32 @@ function App() {
         </div>
 
         {gameState !== 'playing' && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-md rounded-xl animate-in zoom-in duration-300 p-6 text-center">
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-md rounded-xl p-6 text-center">
             {gameState === 'won' ? (
               <>
                 <Trophy className="w-20 h-20 text-yellow-400 mb-4 animate-bounce" />
-                <h2 className="text-4xl font-black text-white mb-2">VOCÊ É FERA!</h2>
-                <p className="text-slate-300 mb-6 text-lg">Limpou o campo e provou que domina os conteúdos!</p>
+                <h2 className="text-4xl font-black text-white mb-2">VITÓRIA!</h2>
+                <button onClick={createGrid} className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold flex items-center gap-2">
+                  <RefreshCw className="w-5 h-5" /> Jogar Novamente
+                </button>
               </>
             ) : (
               <>
-                <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center mb-4">
-                  <span className="text-4xl font-bold text-white">!</span>
-                </div>
-                <h2 className="text-4xl font-black text-white mb-2">QUASE LÁ!</h2>
-                <p className="text-slate-300 mb-6 text-lg">Suas vidas acabaram, mas cada erro é uma chance de aprender algo novo.</p>
+                <h2 className="text-4xl font-black text-white mb-2">FIM DE JOGO</h2>
+                <button onClick={createGrid} className="px-8 py-3 bg-red-600 hover:bg-red-500 text-white rounded-full font-bold flex items-center gap-2">
+                  <RefreshCw className="w-5 h-5" /> Tentar Novamente
+                </button>
               </>
             )}
-            <button onClick={createGrid} className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold flex items-center gap-2 transition-all transform hover:scale-105">
-              <RefreshCw className="w-5 h-5" /> Tentar Outra Vez
-            </button>
           </div>
         )}
 
         {isGeneratingQuestion && !currentQuestion && (
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-sm rounded-xl">
             <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-white font-bold animate-pulse">Professor IA preparando o desafio...</p>
+            <p className="text-white font-bold animate-pulse">Gerando desafio educativo...</p>
           </div>
         )}
-      </div>
-
-      <div className="mt-8 flex flex-col items-center gap-2 text-slate-500 text-sm">
-        <p className="italic">💡 Dica: Se você acertar a pergunta da IA, a bomba é desarmada e o espaço fica seguro!</p>
       </div>
 
       {currentQuestion && (
