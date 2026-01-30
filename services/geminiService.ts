@@ -1,16 +1,25 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { Question, Subject } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getAIInstance = () => {
+  // Tenta obter de process.env (injetado pelo Vite)
+  const apiKey = process.env.API_KEY;
+  if (!apiKey || apiKey === "undefined" || apiKey === "") {
+    return null;
+  }
+  return new GoogleGenAI({ apiKey });
+};
 
 export const generateQuestion = async (subject: Subject): Promise<Question> => {
+  const ai = getAIInstance();
+  if (!ai) throw new Error("Configuração de API_KEY ausente nas variáveis de ambiente.");
+
   const isTech = subject === Subject.Technology;
   
   const prompt = `
     Atue como um professor especialista do Ensino Fundamental 2 (Brasil).
-    Gere uma pergunta de múltipla escolha para alunos de 10 a 15 anos sobre o tema: ${subject}.
-    ${isTech ? 'Foque em raciocínio lógico, algoritmos, lógica de programação (loops, condicionais), sistemas binários ou pensamento computacional.' : 'A pergunta deve seguir os parâmetros da BNCC, ser desafiadora mas adequada para a idade.'}
+    Gere uma pergunta de múltipla escolha sobre o tema: ${subject}.
+    ${isTech ? 'Foque em raciocínio lógico, algoritmos, lógica de programação, sistemas binários ou pensamento computacional.' : 'A pergunta deve ser desafiadora mas adequada para o nível escolar.'}
     Certifique-se de que as opções sejam plausíveis.
     Linguagem: Português (Brasil).
   `;
@@ -23,13 +32,12 @@ export const generateQuestion = async (subject: Subject): Promise<Question> => {
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          question: { type: Type.STRING, description: "A pergunta educativa." },
+          question: { type: Type.STRING },
           options: { 
             type: Type.ARRAY, 
-            items: { type: Type.STRING },
-            description: "Quatro opções de resposta." 
+            items: { type: Type.STRING }
           },
-          correctAnswer: { type: Type.STRING, description: "A opção correta (texto idêntico ao do array)." }
+          correctAnswer: { type: Type.STRING }
         },
         required: ["question", "options", "correctAnswer"]
       }
@@ -40,9 +48,12 @@ export const generateQuestion = async (subject: Subject): Promise<Question> => {
 };
 
 export const getExplanation = async (question: string, userAnswer: string, correctAnswer: string): Promise<string> => {
+  const ai = getAIInstance();
+  if (!ai) return "Chave de API não configurada corretamente.";
+
   const isCorrect = userAnswer === correctAnswer;
   const prompt = `
-    Você é um tutor educativo para alunos de 10 a 15 anos.
+    Você é um tutor educativo.
     Pergunta: ${question}
     Resposta do aluno: ${userAnswer}
     Resposta correta: ${correctAnswer}
@@ -50,10 +61,7 @@ export const getExplanation = async (question: string, userAnswer: string, corre
     Status: ${isCorrect ? 'O aluno acertou' : 'O aluno errou'}.
     
     Tarefa: Explique de forma didática e clara o conceito por trás da pergunta. 
-    Se a pergunta for de tecnologia/lógica, use analogias do cotidiano para explicar o algoritmo ou a lógica envolvida.
-    Se o aluno errou, não o desanime; explique o porquê do erro de forma construtiva.
-    Use um tom encorajador, adequado para adolescentes.
-    Linguagem: Português (Brasil). Limite-se a um parágrafo médio.
+    Use um tom encorajador e didático em Português (Brasil).
   `;
 
   const response = await ai.models.generateContent({

@@ -4,7 +4,7 @@ import { CellData, GameState, Subject, Question } from './types';
 import { generateQuestion } from './services/geminiService';
 import Cell from './components/Cell';
 import QuestionModal from './components/QuestionModal';
-import { Trophy, Heart, Timer, RefreshCw, GraduationCap, BookOpen } from 'lucide-react';
+import { Trophy, Heart, Timer, RefreshCw, GraduationCap, BookOpen, AlertCircle } from 'lucide-react';
 
 const ROWS = 10;
 const COLS = 10;
@@ -21,6 +21,19 @@ function App() {
   const [isGeneratingQuestion, setIsGeneratingQuestion] = useState(false);
   const [pendingMineReveal, setPendingMineReveal] = useState<number | null>(null);
   const [safeCellsCount, setSafeCellsCount] = useState(0);
+  const [apiKeyMissing, setApiKeyMissing] = useState(false);
+
+  useEffect(() => {
+    // Log para depuração na Vercel (ver no console do navegador)
+    console.log("Verificando API_KEY...");
+    if (!process.env.API_KEY || process.env.API_KEY === "undefined" || process.env.API_KEY === "") {
+      console.error("API_KEY não encontrada nas variáveis de ambiente!");
+      setApiKeyMissing(true);
+    } else {
+      console.log("API_KEY detectada com sucesso.");
+      setApiKeyMissing(false);
+    }
+  }, []);
 
   const createGrid = useCallback(() => {
     const totalCells = ROWS * COLS;
@@ -78,13 +91,13 @@ function App() {
 
   useEffect(() => {
     let interval: any;
-    if (gameState === 'playing' && !currentQuestion && !isGeneratingQuestion) {
+    if (gameState === 'playing' && !currentQuestion && !isGeneratingQuestion && !apiKeyMissing) {
       interval = setInterval(() => {
         setTimer(t => t + 1);
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [gameState, currentQuestion, isGeneratingQuestion]);
+  }, [gameState, currentQuestion, isGeneratingQuestion, apiKeyMissing]);
 
   const revealCell = (index: number) => {
     if (gameState !== 'playing' || grid[index].status !== 'hidden' || isGeneratingQuestion) return;
@@ -99,13 +112,17 @@ function App() {
   };
 
   const handleMineHit = async (index: number) => {
+    if (apiKeyMissing) {
+      alert("Configuração incompleta: API_KEY ausente nas variáveis de ambiente da Vercel.");
+      return;
+    }
     setIsGeneratingQuestion(true);
     setPendingMineReveal(index);
     try {
       const question = await generateQuestion(subject);
       setCurrentQuestion(question);
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao gerar pergunta:", error);
       setLives(prev => {
         const next = prev - 1;
         if (next <= 0) setGameState('lost');
@@ -177,6 +194,27 @@ function App() {
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  if (apiKeyMissing) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 text-center">
+        <div className="max-w-md bg-slate-800 border border-red-500/50 p-8 rounded-2xl shadow-2xl">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-4">Ação Necessária na Vercel</h2>
+          <p className="text-slate-300 mb-6">
+            A variável <strong>API_KEY</strong> não foi injetada. 
+            <br/><br/>
+            1. Vá em <em>Settings > Environment Variables</em> no painel da Vercel.<br/>
+            2. Adicione <strong>API_KEY</strong> com o seu token.<br/>
+            3. Vá em <em>Deployments</em> e faça um <strong>Redeploy</strong>.
+          </p>
+          <div className="bg-slate-900 p-3 rounded text-xs text-slate-400 font-mono text-left">
+            Dica: Sem o Redeploy, as novas variáveis não são aplicadas ao site ao vivo.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col items-center py-8 px-4">
