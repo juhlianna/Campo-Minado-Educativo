@@ -44,7 +44,12 @@ export const generateQuestion = async (subject: Subject): Promise<Question> => {
     }
   });
 
-  return JSON.parse(response.text);
+  const text = response.text;
+  if (!text) {
+    throw new Error("A IA não retornou um conteúdo válido.");
+  }
+
+  return JSON.parse(text);
 };
 
 export const getExplanation = async (question: string, userAnswer: string, correctAnswer: string): Promise<string> => {
