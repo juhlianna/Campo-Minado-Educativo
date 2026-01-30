@@ -1,19 +1,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Question, Subject } from "../types";
 
-const getAIInstance = () => {
-  // Tenta obter de process.env (injetado pelo Vite)
-  const apiKey = process.env.API_KEY;
-  if (!apiKey || apiKey === "undefined" || apiKey === "") {
-    return null;
-  }
-  return new GoogleGenAI({ apiKey });
-};
-
 export const generateQuestion = async (subject: Subject): Promise<Question> => {
-  const ai = getAIInstance();
-  if (!ai) throw new Error("Configuração de API_KEY ausente nas variáveis de ambiente.");
-
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
   const isTech = subject === Subject.Technology;
   
   const prompt = `
@@ -44,18 +33,22 @@ export const generateQuestion = async (subject: Subject): Promise<Question> => {
     }
   });
 
-  const text = response.text;
-  if (!text) {
-    throw new Error("A IA não retornou um conteúdo válido.");
+  const responseText: string = response.text || "";
+  
+  if (!responseText) {
+    throw new Error("Falha ao obter resposta da IA: o conteúdo retornado está vazio.");
   }
 
-  return JSON.parse(text);
+  try {
+    return JSON.parse(responseText) as Question;
+  } catch (e) {
+    console.error("Erro ao parsear JSON da IA:", e);
+    throw new Error("Resposta da IA em formato inválido.");
+  }
 };
 
 export const getExplanation = async (question: string, userAnswer: string, correctAnswer: string): Promise<string> => {
-  const ai = getAIInstance();
-  if (!ai) return "Chave de API não configurada corretamente.";
-
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
   const isCorrect = userAnswer === correctAnswer;
   const prompt = `
     Você é um tutor educativo.
@@ -77,5 +70,5 @@ export const getExplanation = async (question: string, userAnswer: string, corre
     }
   });
 
-  return response.text || "Não foi possível carregar a explicação no momento.";
+  return response.text || "Não foi possível carregar a explicação.";
 };
